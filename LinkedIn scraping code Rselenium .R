@@ -1,0 +1,125 @@
+
+
+# Clean up working environment
+
+rm(list = ls())
+
+
+
+# Opening libraries
+
+library(RSelenium)
+
+library(rlist)
+
+library(rvest)
+
+
+
+# Remote driver with Selenium
+
+system("java -jar selenium-server-standalone.jar -port 5555") # if it doesn't work in R, do this step in the console
+
+remDr <- remoteDriver(remoteServerAddr = "yourIPaddress", port = 5555L, browserName = "firefox") 
+
+remDr$open()
+
+remDr$getStatus()
+
+remDr$navigate("https://www.linkedin.com/")
+
+
+
+# Once in LinkedIn, use your account info to explore the site
+
+
+
+sbox <- remDr$findElement(using = "xpath",'//*[@id="session_key"]') #this sends to e-mail box
+
+sbox$sendKeysToElement(list("yourownidsession",key="enter"))
+
+
+
+sbox <- remDr$findElement(using = "xpath",'//*[@id="session_password"]')#password 
+
+sbox$sendKeysToElement(list("yourpassword",key="enter"))#type the password
+
+
+
+### At this point you should be logged into LinkedIn with your account on the remote driver ###
+
+
+
+# Go to a company or school website of interest
+
+remDr$navigate("https://www.linkedin.com/school/school-of-interest/mycompany/")
+
+
+
+# Find list of affiliated members and select the element's css or xpath and click on it to open the new page
+
+sbox <- remDr$findElement(using = "css","csspathhere")
+
+sbox$clickElement()
+
+
+
+### At this point you should see displayed 10 of 1000 available members (LinkedIn only displays a maximum of 1000 members if there are more affiliated to the company) ###
+
+
+
+# Scrape and store data of displayed members. 
+
+# inner loop iterates over the 10 displayed members
+
+# outter loop iterates over the 100 available pages 
+
+### OUTER LOOP CODE IS NOT FINISHED ###
+
+
+
+list_html_source <- list()
+
+list_html_txt <- list()
+
+
+
+for(i in 1L:100L) {
+
+for(j in 1L:10L) {
+
+
+
+user <- vector()
+
+class(user) <- "try-error"
+
+while(class(user) == "try-error") {
+
+css_selector <- paste0("li.reusable-search__result-container:nth-child(", j, ") > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > span:nth-child(1) > div:nth-child(1) > span:nth-child(1) > span:nth-child(1) > a:nth-child(1) > span:nth-child(1) > span:nth-child(1)" )
+
+user <- try(remDr$findElement(using = "css", css_selector))
+
+}
+
+user$clickElement()
+
+parsed_page <- vector()
+
+class(parsed_page) <- "try-error"
+
+while(class(parsed_page) == "try-error") {
+
+parsed_page <-try(remDr$getPageSource()[[1L]])
+
+}
+
+list_html_source[[j]] <- parsed_page
+
+list_html_txt[[j]] <- read_html(parsed_page)
+
+remDr$goBack()
+
+}
+
+}
