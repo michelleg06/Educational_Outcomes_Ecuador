@@ -1,11 +1,13 @@
 ###
 rm(list=ls())
-setwd("~/Desktop/")
-data <- readRDS("ecuador_data.rds")
+setwd("~/Desktop/Ecuador_labour")
+data <- readRDS("ecuador_data_2.rds")
 library(data.table)
 library(tidyverse)
 library(corrplot)
+library(multilevel)
 
+dim(data) # rows: 1,114,294    columns: 1,013
 
 
 ###### 1. Labelling vectors ####
@@ -32,6 +34,7 @@ new_names <- c(
 
 data_transl <- data.table::setnames(data[ , ..old_names], old_names, new_names)
 
+
 ##### 2. Looking at correlations and conditional correlations ####
 lapply(data_transl, class)
 
@@ -55,7 +58,7 @@ colSums(is.na(holder)) #checking for missing values (NAs)
 
 corr <- cor(holder, method = "spearman", use = "pairwise.complete.obs") #calculate corr matrix disregarding NAs
 corrplot(corr, method = "number", order = "hclust", tl.col = "black")
-# a quick glance at variable correlations shows nothing of interesting
+# a quick glance at variable correlations shows nothing interesting
 
 # Look for correlation between level of education and labor income (combination of wage and self-employed)
     # Result for unfiltered data: 0.38.
@@ -107,7 +110,7 @@ ggplot(data = holder,
 ggsave(file="hours_worked.eps")
 dev.off()
     
-# summary statistics of all variables
+# summary statistics of all variables (subset 'holder')
 for(i in 1:ncol(holder)){
     x <- holder[,i]
     print(names(holder)[i])
@@ -115,8 +118,31 @@ for(i in 1:ncol(holder)){
 }
 
 # Define cluster convention (Michelle)
+    #socioeconomic
+        income_labour
+        hours_worked
+        sex
+        age
+        level_of_education
+    #psychosocial (preferences, subjective experience)
+        job_feeling
+        
+    #environmental (access to physical and technological infrastructure)
+
 # Visualization of distributions of relevant variables
 # Intracluster correlation
     ## Run a simple hierarchical analysis (multilevel analysis)
+        dat  <- data_transl[, c("job_feeling", "conglomerado", "hours_worked")]
+        dat2 <-aggregate(dat$hours_worked,list(dat$conglomerado),mean,na.rm=T)
+    
+        names(dat2)[names(dat2) == "Group.1"] <- "conglomerado"
+        names(dat2)[names(dat2) == "x"]       <- "hours_worked_grpMean"
+        
+        dat3 <- merge(dat, dat2, by= "conglomerado")
+        
+        dat3$job_feeling <- as.integer(factor(dat3$job_feeling))
+        
+        mod <- lm(job_feeling~hours_worked+hours_worked_grpMean, data = dat3)
+        summary(mod, cor=F)
 # Define an interaction matrix
     ## make an edgelist where 1 equals similar activitie between two agents and 0 means no similar activity
