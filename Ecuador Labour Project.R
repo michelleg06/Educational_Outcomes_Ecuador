@@ -7,12 +7,14 @@ library(tidyverse)
 library(corrplot)
 library(multilevel)
 library(foreign)
+library(lme4)
+library(jtools)
 #write.dta(data, "ecuador_data_2.dta")
 
 dim(data) # rows: 1,114,294    columns: 1,013
 
 
-###### 1. Labelling vectors ####
+###### 1. Labelling vectors, cleaning ####
 old_names <- c(
     'area', 'ciudad', 'conglomerado', 'panelm', 'vivienda', 'hogar',
     'p01', 'p02', 'p03', 'p10a', 'p10b', 'p12b', 'p24', 'p41', 'p42', 'p43',
@@ -23,7 +25,8 @@ old_names <- c(
     'desempleo','pobreza', 'epobreza', 'rn', 'estrato', 'ingpc', 'pt01a', 'pt1a',
     'pt1b1', 'pt02', 'p60a', 'p60b', 'pt08', 'p40a1', 'analfa', 'escolaridad', 'ih',
     'hsize', 'ipcf', 'pei', 'pea', 'pe02b', 'pe03a1', 'pe03a2', 'pe03a3', 'pe03a4',
-    'pe03a5', 'pe07', 'pe08', 'pe09a', 'pe09b', 'pia01a'
+    'pe03a5', 'pe07', 'pe08', 'pe09a', 'pe09b', 'pia01a',
+    'year'
 )
 
 new_names <- c(
@@ -49,12 +52,38 @@ new_names <- c(
     'working_equipment_in_institution_3', 'working_equipment_in_institution_4',
     'working_equipment_in_institution_5', 'has_received_free_school_tests',
     'has_received_free_school_uniform', 'has_received_school_breakfast',
-    'frequency_of_school_breakfast', 'has_used_bicycle'
+    'frequency_of_school_breakfast', 'has_used_bicycle',
+    'year'
 )
 
 
 data_transl <- data.table::setnames(data[ , ..old_names], old_names, new_names)
 str(data_transl) # 1,114,294 obs. of  85 variables
+
+#Remove typo's 
+level_of_education_typo <- c('educaciÃ³n  media', 'educaciÃ³n bÃ¡sica', 'centro de alfabetizaciÃ³n', 'educación  media')
+level_of_education_correct <- c('educación media', 'educación básica', 'centro de alfabetización', 'educación media')
+
+dat_join <- data.table(old=level_of_education_typo, new=level_of_education_correct)
+data_transl[dat_join, on=c(level_of_education='old'), level_of_education:=new]
+
+#Add level of education as numerical variable
+level_of_education <- c('ninguno', 'centro de alfabetización', 'primaria', 'secundaria', 'educación básica', 'educación media', 'superior no universitario', 'superior universitario', 'post-grado')
+level_of_education_num <- c(0, 1, 2, 3, 4, 5, 6, 7, 8)
+
+dat_join <- data.table(level_of_education=level_of_education, level_of_education_num=level_of_education_num)
+data_transl <- data_transl[dat_join, on=c(level_of_education = 'level_of_education')]
+
+#Add job feeling as numerical variable
+job_feeling_old = c('contento', 'poco contento', 'descontento pero conforme', 
+                    'totalmente decontento', 'no sabe, no responde', NA)
+job_feeling_new = c(4, 3, 2, 1, NA, NA)
+
+data_transl[job_feeling=='no sabe, no responde', job_feeling:=rep(NA, length=.N)] 
+
+dat_join <- data.table(job_feeling = job_feeling_old, job_feeling_num = job_feeling_new)
+data_transl <- data_transl[dat_join, on=c(job_feeling='job_feeling')]
+
 
 ##### 2. Looking at correlations and conditional correlations ####
 lapply(data_transl, class) #returns the same as str()
@@ -200,34 +229,6 @@ for(i in 1:ncol(holder)){
         years_of_schooling
         security_neighb
         
-library(lme4)
-library(jtools)
-        
-    
-#Remove typo's 
-level_of_education_typo <- c('educaciÃ³n  media', 'educaciÃ³n bÃ¡sica', 'centro de alfabetizaciÃ³n', 'educación  media')
-level_of_education_correct <- c('educación media', 'educación básica', 'centro de alfabetización', 'educación media')
-
-dat_join <- data.table(old=level_of_education_typo, new=level_of_education_correct)
-data_transl[dat_join, on=c(level_of_education='old'), level_of_education:=new]
-
-#Add level of education as numerical variable
-level_of_education <- c('ninguno', 'centro de alfabetización', 'primaria', 'secundaria', 'educación básica', 'educación media', 'superior no universitario', 'superior universitario', 'post-grado')
-level_of_education_num <- c(0, 1, 2, 3, 4, 5, 6, 7, 8)
-
-dat_join <- data.table(level_of_education=level_of_education, level_of_education_num=level_of_education_num)
-data_transl <- data_transl[dat_join, on=c(level_of_education = 'level_of_education')]
-
-#Add job feeling as numerical variable
-job_feeling_old = c('contento', 'poco contento', 'descontento pero conforme', 
-                    'totalmente decontento', 'no sabe, no responde', NA)
-job_feeling_new = c(4, 3, 2, 1, NA, NA)
-
-data_transl[job_feeling=='no sabe, no responde', job_feeling:=rep(NA, length=.N)] 
-
-dat_join <- data.table(job_feeling = job_feeling_old, job_feeling_num = job_feeling_new)
-data_transl <- data_transl[dat_join, on=c(job_feeling='job_feeling')]
-
 ## Correlating to find proxies 
 cor.test(data_transl[, years_of_schooling],
          data_transl[, level_of_education_num], 
@@ -244,6 +245,7 @@ cor.test(data_transl[, years_of_schooling],
 # Suggests that studying well-being requires a much broader outlook 
 
 
+###### 4. Using LMER to understand cluster correlations #####
 ## Checking for ICC in three possible variables. Note: g1/g2 means g1 contains g2.
 # However, g2:g1 means g2 is contained in g1: The order switches. 
 m1 <- lmer(income_labour ~ 1 + (1|city/conglomerado), data=data_transl, REML=FALSE)
@@ -345,11 +347,13 @@ summ(m1)
 # Do this later. Not so relevant yet. 
 
 ## The model: y = beta_0 + beta_1 age + beta_2 city + beta_3 conglomerado:city
-## + beta_4 sex:city
-m1 <- lmer(years_of_schooling ~ age + (sex|city) + (1|city/conglomerado), 
+## + beta_4 sex:city. Sort of; I need to figure out how exactly to write down 
+## the random effect of sex per city. 
+m1 <- lmer(years_of_schooling ~ age + (sex|city) + (1|conglomerado:city), 
            data=data_transl, REML=FALSE)
-
-
+summ(m1)
+# Well. This gives some result. I need to apparently remove missing values 
+# to calculate r-sq. 
 
 # Visualization of distributions of relevant variables #done above
 # Intracluster correlation
@@ -368,5 +372,19 @@ mod <- lm(job_feeling~hours_worked+hours_worked_grpMean, data = dat3)
 summary(mod, cor=F)
 # if we define conglomerado as our group variable, there is a correlation of the single outcome to the mean of the group
 #aka we do have nested data!
+
+###### 5. Trying a conceptual model with time fixed effects #####
+## Note: security_neighb and mobile_has_wifi were omitted. I believe they do not 
+## actually vary, at least for some households. 
+mod <- lm(hours_worked ~ year + hh_income_pc + sex + age 
+              + has_received_human_dev_bond 
+          + poverty 
+          #+ security_neighb 
+          #+ mobile_has_wifi
+                    
+          + used_internet_last12months 
+          + has_received_free_school_uniform + has_received_school_breakfast, dat=data_transl)
+str(data_transl)
+summ(mod)
         
     ## make an edgelist where 1 equals similar activitiesbetween two agents and 0 means no similar activity
