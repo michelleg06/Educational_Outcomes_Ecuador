@@ -139,7 +139,7 @@ summary(mod, cor=F)
 # if we define conglomerado as our group variable, there is a correlation of the single outcome to the mean of the group
 #aka we do have nested data!
 
-###### 5. Trying a conceptual model with time fixed effects #####
+###### 2. Trying a conceptual model with time fixed effects #####
 ## Note: security_neighb and mobile_has_wifi were omitted. I believe they do not 
 ## actually vary (all values are NA), at least for some households. 
 mod <- lm(hours_worked ~ year + hh_income_pc + sex + age + has_received_human_dev_bond 

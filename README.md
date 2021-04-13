@@ -5,14 +5,24 @@
 The dataset used can be downloaded at: https://drive.google.com/drive/folders/1V55ahzgc2SWl3GkebYUg814jbh7UQ-7p?usp=sharing. The most important variables are outlined below. Some information on the dataset:
 ...
 
-### Define cluster convention (Michelle)
+## The code
+Some notes:
+* The cleaning, analysis, and modelling workflow is separeted into five files:
+   0. Store full panel as RDS.R. This file loads the yearly panel, merges it into a single table, and stores it as an RDS.
+   1. Translation and cleaning.R. Currently translates the Spanish column names into English, adds some necessary columns, and fixes some typo's. This is where cleaning and defining of new variables takes place.
+   2. Imputation of missing values.R. Currently empty, but this is where we will impute the required variables.
+   3. Descriptive statistics and graphs.R. For the generation of graphs and statistics.
+   4. Modelling.R. Contains the hierarchical mixed model, and some tests associated to its creation. Also contains the more simple fixed effects model based on some variables.
+* We do not currently use pull requests, so some mild awareness is required of who is tasked with working within each file. We believe that this should be fine with out current project size, but will re-evaluate if we run into problems.
+* Comments are used in two ways: as titles of a particular section above the code, and to note some interesting results below the code.
+
+### Define cluster convention
 **Clusters**
         person #l1
         household_id #l2
         home_id #l3
         conglomerado #l4
         city #l5
-
 
 **Socioeconomic**
         income_labour
