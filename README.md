@@ -64,15 +64,15 @@ We have identified the variables below as most important to our discussion:
 ## The code -- in Python
 Should follow a similar set-up as the code in R now does. Note that, for now, **our variables of interest are those marked with a &Dagger; above.** This means that questions of imputation, modelling, and cleaning, apply chiefly to these variables. As time goes on the list of relevant variables will likely change, also through input from the literature review team.
 
-0. Store full panel in a useful format. This file loads the yearly panel, merges it into a single table, and stores it as a useful format.
+0. **SaveAndMergePanel.py**: This file loads the yearly panel, merges it into a single table, and stores it as a useful format.
    * What would be the best format to use here, for importing in step 1.?
-1. Translation and cleaning.R. Should translate the Spanish column names into English, adds some necessary columns, and fixes some typo's. This is where cleaning and defining of new variables takes place.
-2. Imputation of missing values.R. Currently empty, but this is where we will impute the required variables.
+1. **TranslationAndCleaning.py**: Should translate the Spanish column names into English, adds some necessary columns, and fixes some typo's. This is where cleaning and defining of new variables takes place.
+2. **Imputation.py**: Currently empty, but this is where we will impute the required variables.
    * A very important step, and we are unsure how to proceed here. What is the most statistically rigorous way to impute these values? Also requires some input from 3.
-3. Descriptive statistics and graphs.R. For the generation of graphs and descriptive statistics. The results from this step are likely to influence choices made in steps 2 and 4.
+3. **GraphingAndDescriptiveStatistics.py**: For the generation of graphs and descriptive statistics. The results from this step are likely to influence choices made in steps 2 and 4.
    * Work has to be done to understand what data is missing, and why.
    * Some work also has to be done to understand what levels of clustering are most relevant, and for which variables (e.g., is someone most influenced by the average level of education in their household, neighborhood, or city?) Also a question that can be answered
-4. Modelling.R. Contains the hierarchical mixed model, and some tests associated to its creation. Also contains the more simple fixed effects model based on a small selection of variables. We are aiming for a model that incorporates time effects, clustering effects, and some core explanatory variables.
+4. **Modeling.py**: Contains the hierarchical mixed model, and some tests associated to its creation. Also contains the more simple fixed effects model based on a small selection of variables. We are aiming for a model that incorporates time effects, clustering effects, and some core explanatory variables.
    * Some technical work can already be done to try various mixed models, and see how they respond to the data.
 
 ## The code -- in R
