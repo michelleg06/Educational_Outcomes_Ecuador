@@ -1,9 +1,10 @@
-import pandas as pd
-import feather
+import SaveAndMergePanel
 
-# ----------------
-# Import Data
-# ----------------
+
+# ---------
+# Load Data
+# ---------
+data = SaveAndMergePanel.data
 
 
 # --------------------
