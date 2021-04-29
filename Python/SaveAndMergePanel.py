@@ -78,7 +78,6 @@ for df in data_frames:
     df.rename(transl_dict, inplace=True, axis=1)
     df.drop(df.columns.difference(df.columns.intersection(new_names)), inplace=True, axis=1)  # Keep only the used columns.
     year += 1
-    print(year, len(df.columns))
 
 print("--- Concatenating annual DataFrames ---")
 data = pd.concat(data_frames)
