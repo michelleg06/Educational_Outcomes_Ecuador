@@ -57,11 +57,13 @@ data['missing_level_of_education'] = [1 if pd.isnull(x) else 0 for x in data['le
 
 #TODO: Argue, perhaps in more detail, why we can simply drop the other missing values.
 
-X = pd.get_dummies(data=data[['sex', 'age', 'income_pc', 'poverty']]).dropna()
+X = pd.get_dummies(data=data[['sex', 'age', 'income_pc', 'poverty']], drop_first=True).dropna()
 y = data.iloc[X.index]['missing_level_of_education']
 mod = sm.OLS(y, sm.add_constant(X))
 res = mod.fit()
 print(res.summary())
+# Age and poverty appear significant in determining whether information on level of education is missing or not.
+
 # --------------------------------------------
 # Study Completeness for poverty and income_pc
 # --------------------------------------------
