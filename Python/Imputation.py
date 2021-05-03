@@ -1,6 +1,7 @@
 import TranslationAndCleaning
 import pandas as pd
 import statsmodels.api as sm
+import matplotlib.pyplot as plt
 
 data = TranslationAndCleaning.data.reset_index()
 
@@ -41,6 +42,15 @@ print("Completeness for " + ", ".join(model_3_vars) + ":", 1 - data[model_3_vars
 # Exchange years of schooling for level of education & remove has_received_free_school_uniform: 91% complete.
 # Completeness is 99% without level of education, so this variable definitely leads the problem.
 
+model_4_vars = ['level_of_education'] + indep_vars
+model_4_vars.remove('has_received_free_school_uniform')
+model_4_assumptions = data['age'] > 4
+print("Completeness for " + ", ".join(model_4_vars) + ":", 1 - data.loc[model_4_assumptions, model_4_vars].notnull().all(axis=1).value_counts()[False]/total_entries)
+print("Assumption: age > 4")
+
+# TODO: Is it okay to remove all people younger than 5 years old? What does it mean for our outcome?
+# TODO: After removing that age, is the last 1% of missing values MCAR?
+
 # -----------------------------------------
 # Study Completeness for Level of Education
 # -----------------------------------------
@@ -55,14 +65,36 @@ missing_per_year['percentage'] = missing_per_year['count_missing']/missing_per_y
 
 data['missing_level_of_education'] = [1 if pd.isnull(x) else 0 for x in data['level_of_education']]
 
-#TODO: Argue, perhaps in more detail, why we can simply drop the other missing values.
-
 X = pd.get_dummies(data=data[['sex', 'age', 'income_pc', 'poverty']], drop_first=True).dropna()
 y = data.iloc[X.index]['missing_level_of_education']
 mod = sm.OLS(y, sm.add_constant(X))
 res = mod.fit()
 print(res.summary())
 # Age and poverty appear significant in determining whether information on level of education is missing or not.
+# Note: we are modeling a probability,
+
+mod = sm.Probit(y, sm.add_constant(X))
+res = mod.fit()
+print(res.summary())
+# The missingness in the huge amount of values follows a normal distribution, with most variables of the index function
+# being statistically indepdent. Poverty, which appeared significant before, is no longer significant - this now matches
+# the insignificance of income_pc. Age is still among the most relevant factors.
+# Note: might be partial separation. Studied in plots below.
+
+for i in range(0, X.shape[1]):
+    plt.scatter(X.iloc[:,i], y)
+    plt.xlabel(X.columns[i])
+    plt.show()
+# Age almost fully separates the data, with no missing values existing for ages above 8 years old or so.
+# Note: this way of plotting does not work for sex and poverty. Need a value count. See below.
+
+print(data[data['missing_level_of_education'] == 1]['age'].value_counts())
+age_for_non_missing_data = data[data['missing_level_of_education'] == 0]['age']
+print(min(age_for_non_missing_data), max(age_for_non_missing_data))
+# Level of education is missing only for ages 0-4, and exists for all ages above 5.
+
+data[data['age']>4].missing_level_of_education.value_counts()
+# Conclusion: When filtering for ages above 4 all missing data points are removed.
 
 # --------------------------------------------
 # Study Completeness for poverty and income_pc
