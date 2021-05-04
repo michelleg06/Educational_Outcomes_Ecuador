@@ -71,9 +71,10 @@ plt.savefig("heatmap_of_correlations.png")
 plt.clear()
 
 
-
+data_filt = data.loc[(data['hours_worked']>36) and (data['age']>24) and (data['sex']=='mujer')]
 
 # Correlating to find proxies 
+# TODO add the effects of 'ordered'
 data_school_edu_level=pd.concat(
     [
         data["years_of_schooling"],
@@ -100,15 +101,20 @@ plt.show()
 plt.savefig("cor_test_years_of_schooland_job_feeling.png")
 plt.clear()
 
-data_filt = data.loc[(data['hours_worked']>36) and (data['age']>24) and (data['sex']=='mujer')]
+
 
 # Histogram plots.
 
 # Essential commands. 
 corr_plot_data['income_labour'].hist(bins=6)
-corr_plot_data['hours_worked'].hist(bins=6)
-plt.title('My title')
+plt.title('Histogram: income_labour')
 plt.show()
-plt.save_fig("generic_name_2.png")
+plt.save_fig("hist_income_labour.png")
+plt.clear()
 
+corr_plot_data['hours_worked'].hist(bins=6)
+plt.title('Histogram: hours_worked')
+plt.show()
+plt.save_fig("hist_hours_worked.png")
+plt.clear()
 
