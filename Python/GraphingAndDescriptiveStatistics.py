@@ -1,8 +1,5 @@
-#TODO (Siphelele): this skeleton was set up on a slightly outdated main,
-                   # so I will have to check for consistency amongst all
-                   # the todo's.
-
-
+#TODO: bit of cleaning and checking that there is actually 
+#      flow through the code.
 
 #-------------------
 # Import functions
@@ -19,14 +16,11 @@ import matplotlib.pyplot as plt
 # Load Data
 # ---------
 
-#TODO (Siphelele): Import data from TranslationAndClearning
+#TODO: Import data from TranslationAndClearning
 
 # ---------------------
 # Add numerical columns
 # ---------------------
-
-# Add level of education as numerical variable
-# but this will come with the imported data.
 
 # Add sex as a numerical variable
 sex = ["hombre", "mujer"]
@@ -71,19 +65,50 @@ corr_plot_data = pd.concat(
 # Plotting a heatmap with labels as correlation
 # values.
 sn.heatmap(corr_plot_data.corr(), annot=True)
+plt.title('Heatmap of Correlations')
+plt.show()
+plt.savefig("heatmap_of_correlations.png")
+plt.clear()
 
-#TODO (Siphelele): make axis pop-up for this visual.
 
-#TODO (Siphelel): directly translate the part for correlating to 
-#                 find proxies.
+
+
+# Correlating to find proxies 
+data_school_edu_level=pd.concat(
+    [
+        data["years_of_schooling"],
+        data["level_of_education_num"]
+    ],axis=1
+
+)
+sn.heatmap(cdata_school_edu_level.corr(method='spearman'), annot=True)
+plt.title('cor_test: years_of_schooling with level_of_education_num')
+plt.show()
+plt.savefig("cor_test_years_of_schooland_level_of_ed.png")
+plt.clear()
+
+data_school_job_feel=pd.concat(
+    [
+        data["years_of_schooling"],
+        data["job_feeling_num"]
+    ],axis=1
+
+)
+sn.heatmap(data_school_job_feel.corr(method='spearman'), annot=True)
+plt.title('cor_test: years_of_schooling with job_feeling_num')
+plt.show()
+plt.savefig("cor_test_years_of_schooland_job_feeling.png")
+plt.clear()
+
+data_filt = data.loc[(data['hours_worked']>36) and (data['age']>24) and (data['sex']=='mujer')]
 
 # Histogram plots.
 
 # Essential commands. 
 corr_plot_data['income_labour'].hist(bins=6)
 corr_plot_data['hours_worked'].hist(bins=6)
-
-#TODO (Siphelele): Make axes and dispay 
-                   #results then enable saving.
+plt.title('My title')
+plt.show()
+plt.save_fig("generic_name_2.png")
 
 
