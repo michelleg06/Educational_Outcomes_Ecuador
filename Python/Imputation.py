@@ -12,8 +12,8 @@ data = TranslationAndCleaning.data.reset_index()
 cluster_vars = ['person', 'household_id', 'home_id', 'conglomerado', 'city']
 
 indep_vars = ['sex', 'age', 'income_pc', 'poverty', 'has_received_free_school_uniform']
-dep_vars = [
-    'years_of_schooling']  # Is this a numerical proxy for level of education? Perhaps better to use the level directly.
+dep_vars = ['years_of_schooling']
+# Is this a numerical proxy for level of education? Perhaps better to use the level directly.
 
 # ---------------------------------------
 # Study Completeness for Different Models
@@ -97,6 +97,8 @@ data['poverty'].notnull().value_counts()
 
 missing_pov_idx = data.index[data['poverty'].isnull()]
 missing_inc_idx = data.index[data['income_pc'].isnull()]
+present_inc_idx = data.index[data['income_pc'].notnull()]
+
 missing_pov_idx.equals(missing_inc_idx)
 # Returns True: Precisely the same values are missing here. Strange.
 # TODO: What does it mean for our model results that missingness in poverty and income_pc is perfectly correlated?
@@ -174,17 +176,24 @@ pov_proxy_1 = ['number_of_jobs']  # perhaps strongly related to poverty? where m
 pov_proxy_2 = ['hours_worked1', 'place_of_work']  # use in nn imputation?
 
 
-def print_value_counts_for_idx(idx, df, mask, cols):
+def count_missing_values_for_selection(idx, df, mask, cols):
     for col in cols:
-        print(df.iloc[idx].loc[mask, col].notnull().value_counts())
+        print(df.iloc[idx].loc[mask, col].isnull().value_counts())
 
 
-print_value_counts_for_idx(missing_pov_idx, data, model_4_assumptions,
-                           income_cols)  # wage and domestic covers all but 634 missing values!
-print_value_counts_for_idx(missing_pov_idx, data, model_4_assumptions, pov_proxy_1)  # covers all but 446 values.
-print_value_counts_for_idx(missing_pov_idx, data, model_4_assumptions, pov_proxy_2)  # cover a bit more than half of missing values; 5499
-print_value_counts_for_idx(missing_pov_idx, data, model_4_assumptions, hh_income_cols)  # hh_inc_total and hh_income_pc
-                                                                                        # present for all values! Size missing, though.
+count_missing_values_for_selection(missing_pov_idx, data, model_4_assumptions, income_cols)
+# wage and domestic covers all but 634 missing values!
+# capital and capital transactions cover all but one missing value!
+
+count_missing_values_for_selection(missing_pov_idx, data, model_4_assumptions, pov_proxy_1)
+# covers all but 446 values.
+
+count_missing_values_for_selection(missing_pov_idx, data, model_4_assumptions, pov_proxy_2)
+# cover a bit more than half of missing values; 5499
+
+count_missing_values_for_selection(missing_pov_idx, data, model_4_assumptions, hh_income_cols)
+# hh_inc_total and hh_income_pc
+# present for all values! Size missing, though.
 
 data['income_tot'] = data[income_cols].sum(axis=1)
 data['income_pct_change'] = (data['income_pc'] - data['income_tot']) / data['income_pc']
@@ -199,3 +208,16 @@ data['income_pct_change'] = (data['income_pc'] - data['income_tot']) / data['inc
 
 # TODO: Contact statistical office to ask why this discrepancy exists.
 # TODO: Further decide on what proxy to use.
+
+# Impute income data with total data. NOTE: This is far from perfect, but produces a complete dataset for now, until
+# I can get some information from the producer of the dataset.
+# So: Right now income_pc is leading, and imputed with the sum of incomes where necessary.
+data['income_imp'] = data.loc[:, 'income_pc']
+data.loc[missing_inc_idx, 'income_imp'] = data.loc[:, 'income_tot']
+
+# Assert that no values are missing.
+data['income_imp'].isnull().value_counts()[False] == len(data)
+
+# Assert values have been imputed
+data.loc[present_inc_idx, 'income_imp'].equals(data.loc[present_inc_idx, 'income_pc'])
+data.loc[missing_inc_idx, 'income_imp'].equals(data.loc[missing_inc_idx, 'income_tot'])
