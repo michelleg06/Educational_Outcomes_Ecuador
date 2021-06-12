@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-=======
 import TranslationAndCleaning
 import pandas as pd
 import statsmodels.api as sm
@@ -15,6 +13,7 @@ cluster_vars = ['person', 'household_id', 'home_id', 'conglomerado', 'city']
 
 indep_vars = ['sex', 'age', 'income_pc', 'poverty', 'has_received_free_school_uniform']
 dep_vars = ['level_of_education']
+
 # Is this a numerical proxy for level of education? Perhaps better to use the level directly.
 
 # ---------------------------------------
