@@ -7,9 +7,12 @@ from rpy2.robjects.packages import importr
 from scipy.special import expit
 from math import exp
 
+
 import Imputation
 
 ordinal = importr("ordinal")
+texreg = importr("texreg")
+margins = importr("margins")
 
 pandas2ri.activate()
 
@@ -89,9 +92,22 @@ print(fit)
 print(summary(fit))
 print(coef(fit))
 
-# Interpreting thresholds
+# Interpreting thresholds - marginal effects at the mean
 1-expit(coef(fit)[2])  # 76%: chance of high school or higher for average, male, no poverty, no dev bond, with medical insurance.
 1-expit(coef(fit)[3])  # 17%: chance of > high school average, male, no poverty, no dev bond, with medical insurance.
 coef(fit)[6]*expit_deriv(coef(fit)[3])  # Being average and female increases the chance of going above high school by 11%.
 coef(fit)[10]*expit_deriv(coef(fit)[3])  # Being average and receiving a dev bond decreases the chance of going above high school by 17%.
 coef(fit)[8]*expit_deriv(coef(fit)[3])  # Being average and self-reporting poverty decreases the chance of going above high school by 10%.
+
+# Interpreting thresholds - average marginal effects PACKAGE DOES NOT WORK FOR CLMM
+# marginal_effects = robjects.r("marginal_effects")
+# print(marginal_effects(fit))
+
+# Interpreting coefficients - relative risk ratios
+exp(coef(fit)[6])  # 2.2: Being female doubles the chance of increasing in rank.
+exp(coef(fit)[10])  # 0.28: having received a bond would divide the chance of increasing in rank by 3
+exp(coef(fit)[8])  # 0.51: self-reporting poverty halves the chance of increasing in rank
+
+# Storing output
+texreg = robjects.r("texreg")
+texreg(fit, file='reg_output')
