@@ -1,4 +1,5 @@
 import numpy as np
+import statsmodels.api as sm
 import statsmodels.formula.api as smf
 from rpy2 import robjects
 from rpy2.robjects import pandas2ri
@@ -42,8 +43,6 @@ def expit_deriv(x):
 
 data = Imputation.data
 
-drop_na = endog + exog_f + exog_r + clusters
-drop_na.remove('has_received_human_dev_bond')
 data_filtered = data.loc[:, endog + exog_f + exog_r + clusters].dropna(subset=endog + exog_f + exog_r + clusters)
 
 data_filtered.loc[:, 'level_of_education_num'] = data_filtered.loc[:, 'level_of_education_num'].astype(str)
@@ -64,6 +63,10 @@ data['conglomerado'].describe()  # On the whole, ~50% is 999999, of a total of 2
 data['city'].value_counts()  # Many unique values.
 data['city'].value_counts().sum()  # On the whole, ~50% is 999999, of a total of 228k entries that even have this stored.
 
+# 75/94 people who have received a human development bond did not self-identify as poor
+print(len(data_filtered.loc[(data_filtered['has_received_human_dev_bond'] == 1) & (data_filtered['poverty_num'] == 0), :]))
+print(len(data_filtered.loc[(data_filtered['has_received_human_dev_bond'] == 1), :]))
+
 # -----------------------------
 # Modeling using rpy2 and clmm2
 # -----------------------------
@@ -74,12 +77,8 @@ col_index = r_data.colnames.index('level_of_education_num')
 col_as_factor = robjects.vectors.FactorVector(r_data.rx2('level_of_education_num'))
 r_data[col_index] = col_as_factor
 
-# Convert to factor
-col_index = r_data.colnames.index('has_received_human_dev_bond')
-col_as_factor = robjects.vectors.FactorVector(r_data.rx2('has_received_human_dev_bond'))
-r_data[col_index] = col_as_factor
-
 clmm = robjects.r("clmm")
+clm = robjects.r("clm")
 summary = robjects.r("summary")
 coef = robjects.r("coef")
 
@@ -91,6 +90,22 @@ fit = clmm(rl(
 print(fit)
 print(summary(fit))
 print(coef(fit))
+
+# For dev bond specifically
+r_data_dev_bond = pandas2ri.py2rpy_pandasdataframe(data_filtered.loc[data['has_received_human_dev_bond']==1, ['has_received_human_dev_bond', 'level_of_education_num', 'female', 'age_st', 'poverty_num', 'daily_hours_internet_use_st', 'year']].copy())
+
+# Convert to factor
+col_index = r_data_dev_bond.colnames.index('level_of_education_num')
+col_as_factor = robjects.vectors.FactorVector(r_data_dev_bond.rx2('level_of_education_num'))
+r_data_dev_bond[col_index] = col_as_factor
+
+fit_dev_bond = clm(rl(
+    'level_of_education_num ~ female + age_st + poverty_num + daily_hours_internet_use_st +' +
+    'year'
+), data=r_data_dev_bond)
+
+print(fit_dev_bond)
+print(summary(fit_dev_bond))
 
 # Interpreting thresholds - marginal effects at the mean
 1-expit(coef(fit)[2])  # 76%: chance of high school or higher for average, male, no poverty, no dev bond, with medical insurance.

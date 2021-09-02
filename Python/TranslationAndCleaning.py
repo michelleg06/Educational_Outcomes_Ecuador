@@ -72,5 +72,9 @@ data['female'] = [1 if x == 'mujer' else 0 for x in data['sex']]
 # Add column poverty_num, with 1 for in poverty and 0 otherwise
 data['poverty_num'] = [1 if x == 'pobre' else 0 if x == 'no pobre' else np.nan for x in data['poverty']]
 
+# Change column has_received_human_dev_bond to binary with 1 for yes and 0 for no
+data['has_received_human_dev_bond'] = [1 if x == 'si' else 0 if x == 'no' else np.nan for x in data['has_received_human_dev_bond']]
+
+
 # Add column medical_insurance_num, with 1 for yes and 0 otherwise
 data['no_medical_insurance_num'] = [0 if str(x).strip() == 'si' else 1 if str(x).strip() == 'no' else np.nan for x in data['medical_insurance']]
